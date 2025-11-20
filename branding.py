@@ -4,8 +4,6 @@ import io
 from PIL import Image  # Requires: pip install Pillow
 
 # --- Configuration ---
-INPUT_FOLDER = "."
-OUTPUT_FOLDER = "branded_output"
 LEFT_LOGO = "DBG-logo.png"
 RIGHT_LOGO = "DBM-logo.png"
 WATERMARK_LOGO = "DBG-logo.png"
@@ -13,13 +11,6 @@ WATERMARK_LOGO = "DBG-logo.png"
 # Footer Configuration
 FOOTER_TEXT_CENTER = "Shri Classes & DBG Gurukulam (by IITian Golu Sir)"
 FOOTER_URL = "https://dbggurukulam.com"
-
-# Files to process
-TARGET_FILES = [
-    "Maths Bodh Manthan II Class 1.pdf",
-    "Maths Bodh Manthan II Class LKG  v1.0.pdf",
-    "Maths Bodh Manthan II Class UKG v2.0.pdf"
-]
 
 def create_transparent_watermark(image_path, opacity=0.30):
     """
@@ -52,19 +43,16 @@ def create_transparent_watermark(image_path, opacity=0.30):
     img.save(img_buffer, format="PNG")
     return img_buffer.getvalue()
 
-def apply_branding(filename):
-    input_path = os.path.join(INPUT_FOLDER, filename)
-    
+def apply_branding(input_path, output_filename, logos_all_pages=True):
+    input_path = os.path.abspath(input_path)
     if not os.path.exists(input_path):
-        print(f"Skipping: {filename} (File not found)")
+        print(f"Skipping: {input_path} (File not found)")
         return
 
-    print(f"Processing: {filename}...")
+    print(f"Processing: {input_path}...")
     doc = fitz.open(input_path)
-
-    # Create output directory
-    if not os.path.exists(OUTPUT_FOLDER):
-        os.makedirs(OUTPUT_FOLDER)
+    output_dir = os.path.dirname(input_path)
+    output_path = os.path.join(output_dir, output_filename)
 
     # Prepare the watermark image in memory (30% visible)
     watermark_data = create_transparent_watermark(WATERMARK_LOGO, opacity=0.25) # 0.25 is usually best for text readability
@@ -115,13 +103,15 @@ def apply_branding(filename):
             margin_top + logo_size
         )
 
-        # Insert Left Logo (DBG)
-        if os.path.exists(LEFT_LOGO):
-            page.insert_image(left_rect, filename=LEFT_LOGO, keep_proportion=True, overlay=True)
-        
-        # Insert Right Logo (Mission)
-        if os.path.exists(RIGHT_LOGO):
-            page.insert_image(right_rect, filename=RIGHT_LOGO, keep_proportion=True, overlay=True)
+        apply_logos = logos_all_pages or page_num == 0
+        if apply_logos:
+            # Insert Left Logo (DBG)
+            if os.path.exists(LEFT_LOGO):
+                page.insert_image(left_rect, filename=LEFT_LOGO, keep_proportion=True, overlay=True)
+            
+            # Insert Right Logo (Mission)
+            if os.path.exists(RIGHT_LOGO):
+                page.insert_image(right_rect, filename=RIGHT_LOGO, keep_proportion=True, overlay=True)
 
         # ---------------------------------------------------------
         # 3. ADD FOOTER (ALL PAGES)
@@ -147,14 +137,27 @@ def apply_branding(filename):
         page.insert_text((rect.width - url_len - 30, footer_y), FOOTER_URL, fontsize=9, fontname="helv", color=(0, 0, 1))
 
     # Save
-    output_filename = f"BRANDED_{filename}"
-    output_path = os.path.join(OUTPUT_FOLDER, output_filename)
     doc.save(output_path)
     print(f"Saved: {output_path}")
     print("-" * 30)
 
 if __name__ == "__main__":
     print("Starting PDF Branding V2...")
-    for pdf_file in TARGET_FILES:
-        apply_branding(pdf_file)
-    print("All done! Check the 'branded_output' folder.")
+    input_path = input("Enter the full path of the PDF to brand: ").strip()
+    if not input_path:
+        print("No input file provided. Exiting.")
+    else:
+        base_name = os.path.basename(input_path)
+        default_output = f"BRANDED_{base_name}" if base_name else "BRANDED_output.pdf"
+        output_name = input(f"Enter output filename (default: {default_output}): ").strip()
+        output_filename = output_name or default_output
+        if not output_filename.lower().endswith(".pdf"):
+            output_filename += ".pdf"
+
+        logo_preference = input(
+            "Apply top logos on (A)ll pages or (F)irst page only? [A/F]: "
+        ).strip().lower()
+        logos_all_pages = logo_preference in ("a", "all", "y", "yes", "")
+
+        apply_branding(input_path, output_filename, logos_all_pages)
+        print("All done! Output saved next to the input file.")
