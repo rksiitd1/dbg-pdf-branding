@@ -3,6 +3,13 @@ import os
 import io
 from PIL import Image  # Requires: pip install Pillow
 
+try:
+    import tkinter as tk
+    from tkinter import filedialog
+except ImportError:
+    tk = None
+    filedialog = None
+
 # --- Configuration ---
 LEFT_LOGO = "DBG-logo.png"
 RIGHT_LOGO = "DBM-logo.png"
@@ -84,23 +91,22 @@ def apply_branding(input_path, output_filename, logos_all_pages=True):
         # ---------------------------------------------------------
         # Configuration for Header Logos
         logo_size = 65
-        margin_top = 10
-        margin_side = 20
+        margin = 50  # doubled distance, equal from top and sides
         
         # Left Logo Rect
         left_rect = fitz.Rect(
-            margin_side, 
-            margin_top, 
-            margin_side + logo_size, 
-            margin_top + logo_size
+            margin,
+            margin,
+            margin + logo_size,
+            margin + logo_size
         )
         
         # Right Logo Rect
         right_rect = fitz.Rect(
-            rect.width - margin_side - logo_size, 
-            margin_top, 
-            rect.width - margin_side, 
-            margin_top + logo_size
+            rect.width - margin - logo_size,
+            margin,
+            rect.width - margin,
+            margin + logo_size
         )
 
         apply_logos = logos_all_pages or page_num == 0
@@ -143,7 +149,20 @@ def apply_branding(input_path, output_filename, logos_all_pages=True):
 
 if __name__ == "__main__":
     print("Starting PDF Branding V2...")
-    input_path = input("Enter the full path of the PDF to brand: ").strip()
+    input_path = None
+    if filedialog:
+        print("Select the PDF to brand (a file picker window will open)...")
+        root = tk.Tk()
+        root.withdraw()
+        input_path = filedialog.askopenfilename(
+            title="Select PDF to brand",
+            filetypes=[("PDF files", "*.pdf"), ("All files", "*.*")]
+        )
+        root.destroy()
+        if not input_path:
+            print("No file selected in dialog.")
+    if not input_path:
+        input_path = input("Enter the full path of the PDF to brand: ").strip()
     if not input_path:
         print("No input file provided. Exiting.")
     else:
