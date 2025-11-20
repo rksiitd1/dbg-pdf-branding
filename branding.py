@@ -91,22 +91,23 @@ def apply_branding(input_path, output_filename, logos_all_pages=True):
         # ---------------------------------------------------------
         # Configuration for Header Logos
         logo_size = 65
-        margin = 50  # doubled distance, equal from top and sides
+        margin_top = 40
+        margin_side = 60
         
         # Left Logo Rect
         left_rect = fitz.Rect(
-            margin,
-            margin,
-            margin + logo_size,
-            margin + logo_size
+            margin_side,
+            margin_top,
+            margin_side + logo_size,
+            margin_top + logo_size
         )
         
         # Right Logo Rect
         right_rect = fitz.Rect(
-            rect.width - margin - logo_size,
-            margin,
-            rect.width - margin,
-            margin + logo_size
+            rect.width - margin_side - logo_size,
+            margin_top,
+            rect.width - margin_side,
+            margin_top + logo_size
         )
 
         apply_logos = logos_all_pages or page_num == 0
