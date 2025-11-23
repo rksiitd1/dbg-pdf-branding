@@ -168,7 +168,7 @@ if __name__ == "__main__":
         print("No input file provided. Exiting.")
     else:
         base_name = os.path.basename(input_path)
-        default_output = f"BRANDED_{base_name}" if base_name else "BRANDED_output.pdf"
+        default_output = f"DBG_{base_name}" if base_name else "DBG_BRANDED_output.pdf"
         output_name = input(f"Enter output filename (default: {default_output}): ").strip()
         output_filename = output_name or default_output
         if not output_filename.lower().endswith(".pdf"):
