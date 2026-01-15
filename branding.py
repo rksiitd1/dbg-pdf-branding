@@ -50,7 +50,7 @@ def create_transparent_watermark(image_path, opacity=0.30):
     img.save(img_buffer, format="PNG")
     return img_buffer.getvalue()
 
-def apply_branding(input_path, output_filename, logos_all_pages=True):
+def apply_branding(input_path, output_filename, logos_all_pages=True, skip_first_page_watermark=False, skip_watermark=False):
     input_path = os.path.abspath(input_path)
     if not os.path.exists(input_path):
         print(f"Skipping: {input_path} (File not found)")
@@ -70,7 +70,8 @@ def apply_branding(input_path, output_filename, logos_all_pages=True):
         # ---------------------------------------------------------
         # 1. ADD WATERMARK (Centered, 30% visibility)
         # ---------------------------------------------------------
-        if watermark_data:
+        # Skip watermark on first page if requested, or skip all watermarks
+        if watermark_data and not (skip_first_page_watermark and page_num == 0) and not skip_watermark:
             wm_width = 300
             wm_height = 300
             wm_x = (rect.width - wm_width) / 2
@@ -90,9 +91,9 @@ def apply_branding(input_path, output_filename, logos_all_pages=True):
         # 2. ADD HEADER LOGOS (ALL PAGES)
         # ---------------------------------------------------------
         # Configuration for Header Logos
-        logo_size = 65
-        margin_top = 40
-        margin_side = 60
+        logo_size = 40
+        margin_top = 10
+        margin_side = 20
         
         # Left Logo Rect
         left_rect = fitz.Rect(
@@ -110,7 +111,7 @@ def apply_branding(input_path, output_filename, logos_all_pages=True):
             margin_top + logo_size
         )
 
-        apply_logos = logos_all_pages or page_num == 0
+        apply_logos = (not skip_logos) and (logos_all_pages or page_num == 0)
         if apply_logos:
             # Insert Left Logo (DBG)
             if os.path.exists(LEFT_LOGO):
@@ -123,7 +124,7 @@ def apply_branding(input_path, output_filename, logos_all_pages=True):
         # ---------------------------------------------------------
         # 3. ADD FOOTER (ALL PAGES)
         # ---------------------------------------------------------
-        footer_y = rect.height - 30
+        footer_y = rect.height - 20
         
         # Draw line
         shape = page.new_shape()
@@ -175,9 +176,16 @@ if __name__ == "__main__":
             output_filename += ".pdf"
 
         logo_preference = input(
-            "Apply top logos on (A)ll pages or (F)irst page only? [A/F]: "
+            "Apply top logos on (A)ll pages, (F)irst page only, or (N)o logos? [A/F/N]: "
         ).strip().lower()
         logos_all_pages = logo_preference in ("a", "all", "y", "yes", "")
+        skip_logos = logo_preference in ("n", "no", "none")
 
-        apply_branding(input_path, output_filename, logos_all_pages)
+        watermark_preference = input(
+            "Apply watermark on (A)ll pages, (E)xcept first page, or (N)o watermark? [A/E/N]: "
+        ).strip().lower()
+        skip_first_page_watermark = watermark_preference in ("e", "except", "skip")
+        skip_watermark = watermark_preference in ("n", "no", "none")
+
+        apply_branding(input_path, output_filename, logos_all_pages, skip_first_page_watermark, skip_watermark)
         print("All done! Output saved next to the input file.")
