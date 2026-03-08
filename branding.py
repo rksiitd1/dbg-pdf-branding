@@ -16,7 +16,7 @@ RIGHT_LOGO = "DBM-logo.png"
 WATERMARK_LOGO = "DBG-logo.png"
 
 # Footer Configuration
-FOOTER_TEXT_CENTER = "Shri Classes & DBG Gurukulam (by IITian Golu Sir)"
+FOOTER_TEXT_CENTER = "Shri Classes & DBG Gurukulam"
 FOOTER_URL = "https://dbggurukulam.com"
 
 def create_transparent_watermark(image_path, opacity=0.30):
